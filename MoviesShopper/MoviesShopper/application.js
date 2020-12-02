@@ -29,6 +29,10 @@
  * The location attribute is automatically added to the object and represents 
  * the URL that was used to retrieve the application JavaScript.
  */
+
+let genres = {};
+let movies = {};
+
 App.onLaunch = function(options) {
     const loading = createActivityIndicator("Loading feed...")
     navigationDocument.pushDocument(loading);
@@ -121,6 +125,50 @@ function parseJson(text) {
         movie.link = fixXML(entry["link"][0]["attributes"]["href"]);
         movie.trailerURL = fixXML(entry["link"][1]["attributes"]["href"]);
         // распечатываем результат
-        console.log(movie)
+        if (movie.genre in genres) {
+            genres[movie.genre].push(movie);
+        } else {
+            genres[movie.genre] = [movie];
+        }
+        movies[movie.trailerURL] = movie;
     }
+    const shelfTitles = Object.keys(genres).sort();
+    const stack = createStackTemplate(shelfTitles);
+    navigationDocument.replaceDocument(stack, navigationDocument.documents[0]); 
+}
+
+function createLockupElement(movie) {
+    
+    return `<lockup trailerURL="${movie.trailerURL}">
+    <img width="250" height="370" src="${movie.coverURL}" />
+    <title>${movie.title}</title>
+    </lockup>`;
+}
+
+function createShelfElement(genre) {
+    return `<shelf>
+    <header>
+    <title>${genre}</title>
+    </header>
+    <section>
+    ${genres[genre].map(createLockupElement).join("")}
+    </section>
+    </shelf>`;
+}
+
+function createStackTemplate(shelfTitles) {
+    const markup = `<?xml version="1.0" encoding="UTF-8" ?>
+    <document>
+    <stackTemplate>
+    <img src="resource://banner" width="1920" height="500" />
+    </background>
+    </banner>
+    
+    <collectionList>
+    ${shelfTitles.map(createShelfElement).join("")}
+    </collectionList>
+    </stackTemplate>
+    </document>`;
+    
+    return new DOMParser().parseFromString(markup, "application/xml")
 }
