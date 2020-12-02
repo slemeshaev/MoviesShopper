@@ -30,8 +30,8 @@
  * the URL that was used to retrieve the application JavaScript.
  */
 App.onLaunch = function(options) {
-    var alert = createAlert("Hello World!", "Welcome to tvOS");
-    navigationDocument.pushDocument(alert);
+    const loading = createActivityIndicator("Loading feed...")
+    navigationDocument.pushDocument(loading);
 }
 
 
@@ -70,4 +70,18 @@ var createAlert = function(title, description) {
     var alertDoc = parser.parseFromString(alertString, "application/xml");
 
     return alertDoc
+}
+
+function createActivityIndicator(title) {
+    
+    const markup = `<?xml version="1.0" encoding="UTF-8" ?>
+    <document>
+    <loadingTemplate>
+    <activityIndicator>
+    <text>${title}</text>
+    </activityIndicator>
+    </loadingTemplate>
+    </document>`;
+    
+    return new DOMParser().parseFromString(markup, "application/xml")
 }
