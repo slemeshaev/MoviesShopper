@@ -32,6 +32,8 @@
 App.onLaunch = function(options) {
     const loading = createActivityIndicator("Loading feed...")
     navigationDocument.pushDocument(loading);
+    
+    loadData("https://itunes.apple.com/us/rss/topmovies/limit=100/json", parseJson)
 }
 
 
@@ -84,4 +86,41 @@ function createActivityIndicator(title) {
     </document>`;
     
     return new DOMParser().parseFromString(markup, "application/xml")
+}
+
+function loadData(url, callback) {
+    // создаем объект запроса
+    const request = new XMLHttpRequest();
+    // запуск функции обратного вызова, когда у нас есть данные
+    request.addEventListner("load", function() { callback(request.response); });
+    // конфигурация запроса URL, используя get
+    request.open("GET", url)
+    // отправка запроса
+    request.send();
+}
+
+function fixXML(str) {
+    return str.replace("&", "amp;");
+}
+
+function parseJson(text) {
+    // конвертируем текст в массивы и словари
+    const json = JSON.parse(text);
+    // просматриваем все фильмы, которые нашли
+    for (entry of json["feed"]["entry"]) {
+        // создаем новый объект фильм
+        let movie = {};
+        // устанавливаем настройки из JSON, используя fixXML() для безопасности
+        movie.title = fixXML(entry["im:name"]["label"]);
+        movie.genre = fixXML(entry["category"]["attributes"]["label"]);
+        movie.summary = fixXML(entry["summary"]["label"]);
+        movie.director = fixXML(entry["im:artist"]["label"]);
+        movie.releaseDate = fixXML(entry["im:releaseDate"]["attributes"]["label"]);
+        movie.price = fixXML(entry["im:price"]["label"]);
+        movie.coverURL = fixXML(entry["im:image"][0]["label"]).replace("60x60", "600x600");
+        movie.link = fixXML(entry["link"][0]["attributes"]["href"]);
+        movie.trailerURL = fixXML(entry["link"][1]["attributes"]["href"]);
+        // распечатываем результат
+        console.log(movie)
+    }
 }
